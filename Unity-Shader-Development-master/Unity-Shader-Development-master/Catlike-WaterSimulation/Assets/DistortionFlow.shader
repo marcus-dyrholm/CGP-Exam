@@ -5,23 +5,25 @@
 		_EmissionMap ("Emission Map", 2D) = "white"{}
 		[HDR] _EmissionColor ("Emission Color", Color) = (0,0,0)
 		[NoScaleOffset] _FlowMap ("Flow (RG, A noise)", 2D) = "black" {}
-		[NoScaleOffset] _DerivHeightMap ("Deriv (AG) Height (B)", 2D) = "black" {}
+		//[NoScaleOffset] _DerivHeightMap ("Deriv (AG) Height (B)", 2D) = "black" {}
 		_UJump ("U jump per phase", Range(-0.25, 0.25)) = 0.25
 		_VJump ("V jump per phase", Range(-0.25, 0.25)) = 0.25
 		_Tiling ("Tiling", Float) = 1
 		_Speed ("Speed", Float) = 1
 		_FlowStrength ("Flow Strength", Float) = 1
 		_FlowOffset ("Flow Offset", Float) = 0
-		_HeightScale ("Height Scale, Constant", Float) = 0.25
-		_HeightScaleModulated ("Height Scale, Modulated", Float) = 0.75
-		_Glossiness ("Smoothness", Range(0,1)) = 0.5
-		_Metallic ("Metallic", Range(0,1)) = 0.0
+		//_HeightScale ("Height Scale, Constant", Float) = 0.25
+		//_HeightScaleModulated ("Height Scale, Modulated", Float) = 0.75
+		//_Glossiness ("Smoothness", Range(0,1)) = 0.5
+		//_Metallic ("Metallic", Range(0,1)) = 0.0
+		//_FresnelColor ("Fresnel Color", Color) = (1,1,1,1)
+        //[PowerSlider(4)] _FresnelExponent ("Fresnel Exponent", Range(0.25, 4)) = 1
 	}
 	SubShader {
 		Tags {"Queue"="Transparent"  "RenderType"="Transparent" }
 		//LOD 200
 		
-		ZWrite Off
+		//ZWrite Off
 		//Blend SrcAlpha OneMinusSrcAlpha
 		//Cull Off
 
@@ -31,17 +33,23 @@
 
 		#include "Flow.cginc"
 
-		sampler2D _MainTex, _FlowMap, _DerivHeightMap;
+		sampler2D _MainTex, _FlowMap, _EmissionMap, _DerivHeightMap;
 		float _UJump, _VJump, _Tiling, _Speed, _FlowStrength, _FlowOffset;
 		float _HeightScale, _HeightScaleModulated;
 
-		uniform sampler2D _EmissionMap;
+		//uniform sampler2D _EmissionMap;
 		float4 _EmissionColor;
+
+
+        //float3 _FresnelColor;
+        //float _FresnelExponent;
 
 		struct Input {
 			float2 uv_MainTex;
 			float2 uv_EmissionMap;
 			float3 worldNormal;
+			float3 viewDir;
+			INTERNAL_DATA
 		};
 		
 		
@@ -94,6 +102,18 @@
 			//o.Metallic = _Metallic;
 			//o.Smoothness = _Glossiness;
 			o.Alpha = c.a;
+/*
+            //get the dot product between the normal and the view direction
+            float fresnel = dot(IN.worldNormal, IN.viewDir);
+            //invert the fresnel so the big values are on the outside
+            fresnel = saturate(1 - fresnel);
+            //raise the fresnel value to the exponents power to be able to adjust it
+            fresnel = pow(fresnel, _FresnelExponent);
+            //combine the fresnel value with a color
+            float3 fresnelColor = fresnel * _FresnelColor;
+            //apply the fresnel value to the emission
+            o.Emission = _EmissionColor + fresnelColor;
+*/
 			
 		}
 		ENDCG
