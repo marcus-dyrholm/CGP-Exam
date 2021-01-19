@@ -11,20 +11,22 @@
 		_Speed ("Speed", Float) = 1
 		_FlowStrength ("Flow Strength", Float) = 1
 		_FlowOffset ("Flow Offset", Float) = 0
+		_FadeScale ("fade scale", Float)= 0
 
 	}
 	SubShader {
 		Tags {"Queue"="Transparent"  "RenderType"="Transparent" }
+		ZWrite Off
 
 		CGPROGRAM
-		#pragma surface surf Standard alpha:fade nolightmap 
+		#pragma surface surf Standard alpha:fade 
 		#pragma target 3.0
 
 		#include "Flow.cginc"
 
 		sampler2D _MainTex, _FlowMap, _EmissionMap, _DerivHeightMap;
 		float _UJump, _VJump, _Tiling, _Speed, _FlowStrength, _FlowOffset;
-		float _HeightScale, _HeightScaleModulated;
+		float _HeightScale, _HeightScaleModulated, _FadeScale;
 
 		float4 _EmissionColor;
 
@@ -56,13 +58,13 @@
 				_FlowOffset, _Tiling, time, true
 			);
 
-			clip(IN.worldNormal.y);
+			
 			fixed4 texA = tex2D(_MainTex, uvwA.xy) * uvwA.z;
 			fixed4 texB = tex2D(_MainTex, uvwB.xy) * uvwB.z;
 			
 			fixed4 c = (texA + texB) * _Color;
 			o.Albedo = c.rgb + tex2D(_EmissionMap, IN.uv_MainTex) * _EmissionColor;
-			o.Alpha = c.a;
+			o.Alpha = c.a * max(0, IN.worldNormal.y + _FadeScale);
 			
 		}
 		ENDCG

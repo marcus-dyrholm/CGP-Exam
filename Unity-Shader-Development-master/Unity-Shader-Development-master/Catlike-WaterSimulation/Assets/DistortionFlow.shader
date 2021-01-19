@@ -12,10 +12,11 @@
 		_Speed ("Speed", Float) = 1
 		_FlowStrength ("Flow Strength", Float) = 1
 		_FlowOffset ("Flow Offset", Float) = 0
+		_FadeScale ("fade scale", Float)= 0
 		//_HeightScale ("Height Scale, Constant", Float) = 0.25
 		//_HeightScaleModulated ("Height Scale, Modulated", Float) = 0.75
 		//_Glossiness ("Smoothness", Range(0,1)) = 0.5
-		//_Metallic ("Metallic", Range(0,1)) = 0.0
+		_Metallic ("Metallic", Range(0,1)) = 0.0
 		//_FresnelColor ("Fresnel Color", Color) = (1,1,1,1)
         //[PowerSlider(4)] _FresnelExponent ("Fresnel Exponent", Range(0.25, 4)) = 1
 	}
@@ -23,19 +24,19 @@
 		Tags {"Queue"="Transparent"  "RenderType"="Transparent" }
 		//LOD 200
 		
-		//ZWrite Off
+		ZWrite On
 		//Blend SrcAlpha OneMinusSrcAlpha
 		//Cull Off
 
 		CGPROGRAM
-		#pragma surface surf Standard alpha:fade nolightmap //noambient nodirlightmap novertexlights
+		#pragma surface surf Standard alpha:fade //nolightmap //noambient nodirlightmap novertexlights
 		#pragma target 3.0
 
 		#include "Flow.cginc"
 
 		sampler2D _MainTex, _FlowMap, _EmissionMap, _DerivHeightMap;
 		float _UJump, _VJump, _Tiling, _Speed, _FlowStrength, _FlowOffset;
-		float _HeightScale, _HeightScaleModulated;
+		float _HeightScale, _HeightScaleModulated, _FadeScale;
 
 		//uniform sampler2D _EmissionMap;
 		float4 _EmissionColor;
@@ -55,7 +56,7 @@
 		
 
 		//half _Glossiness;
-		//half _Metallic;
+		half _Metallic;
 		fixed4 _Color;
 /*
 		float3 UnpackDerivativeHeight (float4 textureData) {
@@ -93,15 +94,15 @@
 				(uvwB.z * finalHeightScale);
 			o.Normal = normalize(float3(-(dhA.xy + dhB.xy), 1));
 */		
-			clip(IN.worldNormal.y);
+			//clip(IN.worldNormal.y);
 			fixed4 texA = tex2D(_MainTex, uvwA.xy) * uvwA.z;
 			fixed4 texB = tex2D(_MainTex, uvwB.xy) * uvwB.z;
 			
 			fixed4 c = (texA + texB) * _Color;
 			o.Albedo = c.rgb + tex2D(_EmissionMap, IN.uv_MainTex) * _EmissionColor;
-			//o.Metallic = _Metallic;
+			o.Metallic = _Metallic;
 			//o.Smoothness = _Glossiness;
-			o.Alpha = c.a;
+			o.Alpha = c.a * max(0, IN.worldNormal.y + _FadeScale);
 /*
             //get the dot product between the normal and the view direction
             float fresnel = dot(IN.worldNormal, IN.viewDir);
